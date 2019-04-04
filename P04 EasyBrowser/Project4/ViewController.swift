@@ -13,7 +13,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
     var webView: WKWebView!
     var progressView: UIProgressView!
-    var websites = ["apple.com", "hackingwithswift.com", "jasonmcnabbmusic.com",]
+    var websites = ["apple.com", "hackingwithswift.com", "http://jasonmcnabbmusic.com",]
     
     override func loadView() {
         webView = WKWebView()
@@ -28,12 +28,15 @@ class ViewController: UIViewController, WKNavigationDelegate {
         
         let spacer = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         let refresh = UIBarButtonItem(barButtonSystemItem: .refresh, target: webView, action: #selector(webView.reload))
+        let back = UIBarButtonItem(title: "Back", style: .plain, target: webView, action: #selector(webView.goBack))
+        let forward = UIBarButtonItem(title: "Forward", style: .plain, target: webView, action: #selector(webView.goForward))
+
         
         progressView = UIProgressView(progressViewStyle: .default)
         progressView.sizeToFit()
         let progressButton = UIBarButtonItem(customView: progressView)
         
-        toolbarItems = [progressButton, spacer, refresh]
+        toolbarItems = [progressButton, spacer, refresh, back, forward]
         navigationController?.isToolbarHidden = false
         
         webView.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
@@ -47,7 +50,11 @@ class ViewController: UIViewController, WKNavigationDelegate {
         let ac = UIAlertController(title: "Open Page..", message: nil, preferredStyle: .actionSheet)
         
         for website in websites {
-            ac.addAction(UIAlertAction(title: website, style: .default, handler: openPage))
+            if website.hasPrefix("http://") {
+                ac.addAction(UIAlertAction(title: website, style: .default, handler: forbiddenSite))
+            } else {
+                ac.addAction(UIAlertAction(title: website, style: .default, handler: openPage))
+            }
         }
         
         ac.addAction(UIAlertAction(title: "Cancel", style: .cancel))
@@ -55,9 +62,16 @@ class ViewController: UIViewController, WKNavigationDelegate {
         present(ac,animated: true)
     }
     
+    func forbiddenSite(action: UIAlertAction) {
+        let ac = UIAlertController(title: "DANGER", message: "This website is forbidden.", preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "Go Back", style: .cancel))
+        present(ac, animated: true)
+    }
+    
     func openPage(action: UIAlertAction) {
         guard let actionTitle = action.title else { return }
         guard let url = URL(string: "https://" + actionTitle) else { return }
+            
         webView.load(URLRequest(url: url))
     }
     
