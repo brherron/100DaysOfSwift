@@ -57,16 +57,24 @@ class ViewController: UITableViewController {
     }
     
     
-    func filter(_ term: String) {
-        let lowerTerm = term.lowercased()
+    func filter(_ term: String?) {
+        guard let lowerTerm = term?.lowercased() else { return }
         filteredPetitions = []
         
-        for petition in petitions {
-            if petition.title.lowercased().contains(lowerTerm) {
-                filteredPetitions.append(petition)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            
+            guard let petitions = self?.petitions else { return }
+            
+            for petition in petitions {
+                if petition.title.lowercased().contains(lowerTerm) {
+                    self?.filteredPetitions.append(petition)
+                }
+            }
+            
+            DispatchQueue.main.async { [weak self] in
+                self?.tableView.reloadData()
             }
         }
-        tableView.reloadData()
     }
     
     
