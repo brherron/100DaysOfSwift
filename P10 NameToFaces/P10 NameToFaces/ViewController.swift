@@ -19,6 +19,11 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
     
     @objc func addNewPerson() {
         let picker = UIImagePickerController()
+        
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            picker.sourceType = .camera
+        }
+        
         picker.allowsEditing = true
         picker.delegate = self
         present(picker, animated: true)
@@ -51,18 +56,31 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let person = people[indexPath.item]
         
-        let ac = UIAlertController(title: "Rename Person", message: nil, preferredStyle: .alert)
-        ac.addTextField()
-        
-        ac.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        ac.addAction(UIAlertAction(title: "OK", style: .default) {
-            [weak self, weak ac] _ in
-            guard let newName = ac?.textFields?[0].text else { return }
-            person.name = newName
+        let ac = UIAlertController(title: "Edit Person", message: nil, preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "Rename", style: .default, handler: { [weak self, weak ac] _ in
+            let ac2 = UIAlertController(title: "Rename Person", message: nil, preferredStyle: .alert)
+            ac2.addTextField()
             
+            ac2.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            ac2.addAction(UIAlertAction(title: "OK", style: .default) {
+                [weak self, weak ac2] _ in
+                guard let newName = ac2?.textFields?[0].text else { return }
+                person.name = newName
+                
+                self?.collectionView.reloadData()
+            })
+            self?.present(ac2, animated: true)
+        }))
+        
+        ac.addAction(UIAlertAction(title: "Delete", style: .default, handler: { [weak self] _ in
+            self?.people.remove(at: indexPath.item)
+            self?.collectionView.deleteItems(at: [indexPath])
             self?.collectionView.reloadData()
-        })
+        }))
+        
         present(ac, animated: true)
+        
+        
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
